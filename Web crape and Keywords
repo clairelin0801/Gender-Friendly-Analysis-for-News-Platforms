@@ -1,0 +1,31 @@
+import time
+import requests
+from bs4 import BeautifulSoup
+
+problem = []
+keyword_times = 0
+keyword = ['小白臉','花瓶','龍騎士','肥宅','爆乳','酥胸','美尻女神', 
+           'gay炮','女權自助餐','陰陽人','剩女','男人婆', '性感', '火辣', 
+           '猛男', '女生', '女警', '男護士', '女人', '敗犬', '美胸', '胸部',
+           '宅男', '宅男女神', '女駕駛', '女生就該']
+#keyword = ['小白臉','花瓶','龍騎士','肥宅','爆乳','酥胸','美尻女神']
+for i in range(2001,5000):
+    num = 5626670 - i
+    r = requests.get("https://udn.com/news/story/7317/" + str(num) + "?from=udn-relatednews_ch2") #將網頁資料GET下來 
+    soup = BeautifulSoup(r.text,"html.parser") #將網頁資料以html.parser
+    sel = soup.select("p") #取HTML標中的<p>標籤存入sel
+    content = []
+    for t in sel:
+        if t.getText() != '':#存在文字
+            content.append(t.getText())
+    
+    for j in range(0,len(content)):
+        for k in keyword:
+            if k in content[j]:
+                keyword_times += 1
+                problem.append(num)
+                
+    if i%15 == 0:
+        time.sleep(5)
+    print(i)    
+print(keyword_times)
