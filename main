@@ -1,0 +1,109 @@
+# Imports the Google Cloud client library(API)
+from google.cloud import language_v1
+import os
+
+#爬蟲
+import time
+import requests
+from bs4 import BeautifulSoup
+
+#google API 金鑰
+credential_path = 'gold_code.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
+
+# Instantiates a client
+client = language_v1.LanguageServiceClient()
+
+#紀錄出現關鍵字的網址及文字
+record_num = []
+record_text = []
+
+#實際爬取篇數
+real = 0
+i = 0
+
+#關鍵字出現次數
+keyword_times = [0]*18
+
+#keyword
+keyword = ['gay炮','女權自助餐','陰陽人','剩女','男人婆','小白臉','花瓶','龍騎士','肥宅',
+           '爆乳','酥胸','美尻女神','火辣','大奶','巨乳','辣妹','台女','洋腸']
+
+#輸入爬取網站與資料數
+choice = int(input("請選擇爬蟲網站: 1: 三立新聞 ; 2: 中天新聞 ; 3: 東森新聞 ; 4: 聯合新聞 ;\n5: 今日新聞 ; 6: TVBS:\n"))
+data_num = int(input('資料數量: '))
+
+#爬蟲
+while real < data_num:
+    
+    #三立
+    num_three = 971840 - i
+    web_three = "https://star.setn.com/news/" + str(num_three) 
+    + "?utm_source=star.setn.com&utm_medium=hot&utm_campaign=hotnews"
+    
+    #中天
+    num_mid = 1833330 - i
+    web_mid = "https://gotv.ctitv.com.tw/2021/07/" + str(num_mid) + ".htm"
+    
+    #東森
+    num_east = 271329 - i
+    web_east = "https://news.ebc.net.tw/news/entertainment/" + str(num_east)
+    
+    #聯合熱門
+    num_unite = 5630864 - i
+    web_unite = 'https://stars.udn.com/star/story/10088/' + str(num_unite)
+    
+    #今日新聞
+    num_today = 5338178 - i
+    web_today = 'https://www.nownews.com/news/' + str(num_today)
+    
+    #TVBS
+    num_tvbs = 1555580 - i
+    web_tvbs = 'https://news.tvbs.com.tw/entertainment/' + str(num_tvbs)
+    
+    #選擇網站
+    if choice == 1:
+        web = web_three
+    elif choice == 2:
+        web = web_mid
+    elif choice == 3:
+        web = web_east
+    elif choice == 4:
+        web = web_unite
+    elif choice == 5:
+        web = web_today
+    elif choice == 6:
+        web = web_tvbs
+        
+    r = requests.get(web) #將網頁資料GET下來 
+    soup = BeautifulSoup(r.text,"html.parser") #將網頁資料以html.parser
+    sel = soup.select("p") #取HTML標中的<p>標籤存入sel
+    content = []
+    for t in sel:
+        if t.getText() != '':#存在文字
+            content.append(t.getText())
+            
+    for j in range(0,len(content)):
+        for k in range(0,len(keyword)):
+            if keyword[k] in content[j]:
+                keyword_times[k] += 1
+                record_num.append(web)
+                record_text.append(content[j])
+                print('文章內容: {}'.format(content[j]))
+                text = 'u' + content[j]
+                document = language_v1.Document(content=text, type_=language_v1.Document.Type.PLAIN_TEXT)
+                # Detects the sentiment of the text
+                sentiment = client.analyze_sentiment(request={'document': document}).document_sentiment
+                print("Sentiment: {}, {}".format(sentiment.score, sentiment.magnitude))
+    
+    if content != []:
+        real += 1       
+        
+    if i%15 == 0:
+        time.sleep(3)
+    print(i) 
+    i += 1
+    
+for s in range(0,len(keyword)):
+    print('"{}"出現{}次\n'.format(keyword[s],keyword_times[s]))
+print('實際爬取{}篇'.format(real))
