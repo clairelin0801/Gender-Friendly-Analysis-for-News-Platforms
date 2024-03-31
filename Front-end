@@ -1,0 +1,728 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Mar 31 11:45:26 2024
+
+@author: USER
+"""
+
+from flask import Flask
+from flask import render_template
+from flask import request,url_for,redirect
+import numpy as np
+import pandas as pd
+import email.message
+import smtplib
+
+
+filename = "cons_mod.csv"   # 檔名
+data = pd.read_csv(filename)  # 讀檔
+   
+
+man = pd.read_csv("cons_man.csv")
+woman = pd.read_csv("cons_woman.csv")
+x = pd.read_csv("cons_x.csv")
+emotion_score = pd.read_csv("emotion_score.csv")
+
+new = ['三立','中天','天下','聯合熱門','今日新聞','TVBS','關鍵新聞','公視','數位時代']
+set_info = []
+cti_info = []
+ebc_info = []
+udn_info = []
+now_info = []
+tvb_info = []
+tnl_info = []
+new_info = []
+bnext_info = []
+
+total = []
+total_man = []
+total_woman = []
+total_x = []
+emotion = []
+
+for i in range(0, 9, 1):
+    total.append(data[new[i]].sum())
+    total_man.append(man[new[i]].sum())
+    total_woman.append(woman[new[i]].sum())
+    total_x.append(x[new[i]].sum())
+    emotion.append(emotion_score[new[i]].sum())
+
+
+data = data.to_dict() 
+
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[0]][i]}
+    set_info.append(key)
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[1]][i]}
+    cti_info.append(key)
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[2]][i]}
+    ebc_info.append(key)
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[3]][i]}
+    udn_info.append(key)
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[4]][i]}
+    now_info.append(key)
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[5]][i]}
+    tvb_info.append(key)
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[6]][i]}
+    tnl_info.append(key)
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[7]][i]}
+    new_info.append(key)
+for i in range(0, 25, 1):
+    key = {'name':data['關鍵字'][i], 'value':data[new[8]][i]}
+    bnext_info.append(key)
+
+
+#友善程度(關鍵字次數)
+friend1 = [] #友善
+friend2 = [] #稍微友善
+friend3 = [] #普通
+friend4 = [] #稍微不友善
+friend5 = [] #不友善
+
+friend1_w = [] #友善
+friend2_w = [] #稍微友善
+friend3_w = [] #普通
+friend4_w = [] #稍微不友善
+friend5_w = [] #不友善
+
+friend1_m = [] #友善
+friend2_m = [] #稍微友善
+friend3_m = [] #普通
+friend4_m = [] #稍微不友善
+friend5_m = [] #不友善
+
+friend1_x = [] #友善
+friend2_x = [] #稍微友善
+friend3_x = [] #普通
+friend4_x = [] #稍微不友善
+friend5_x = [] #不友善
+
+for j in range(0, 9, 1):
+    if(total[j] == 0):# 0
+        friend1.append(new[j])
+    elif(0 < total[j] <= 10):# 0-10
+        friend2.append(new[j])
+    elif(10 < total[j] <= 25):# 10-25
+        friend3.append(new[j])
+    elif(25 < total[j] <= 40):# 25-40
+        friend4.append(new[j])
+    elif(40 < total[j]):# 40
+        friend5.append(new[j])
+        
+    if(total[j] == 0):# 0
+        friend1_w.append(new[j])
+    elif(0 < total[j] <= 10):# 0-10
+        friend2_w.append(new[j])
+    elif(10 < total[j] <= 25):# 10-25
+        friend3_w.append(new[j])
+    elif(25 < total[j] <= 40):# 25-40
+        friend4_w.append(new[j])
+    elif(40 < total[j]):# 40
+        friend5_w.append(new[j])
+        
+    if(total[j] == 0):# 0
+        friend1_m.append(new[j])
+    elif(0 < total[j] <= 10):# 0-10
+        friend2_m.append(new[j])
+    elif(10 < total[j] <= 25):# 10-25
+        friend3_m.append(new[j])
+    elif(25 < total[j] <= 40):# 25-40
+        friend4_m.append(new[j])
+    elif(40 < total[j]):# 40
+        friend5_m.append(new[j])
+        
+    if(total[j] == 0):# 0
+        friend1_x.append(new[j])
+    elif(0 < total[j] <= 10):# 0-10
+        friend2_x.append(new[j])
+    elif(10 < total[j] <= 25):# 10-25
+        friend3_x.append(new[j])
+    elif(25 < total[j] <= 40):# 25-40
+        friend4_x.append(new[j])
+    elif(40 < total[j]):# 40
+        friend5_x.append(new[j])
+
+#情緒分析
+emotion1 = [] #中性
+emotion2 = [] #些微正面
+emotion3 = [] #正面
+
+for j in range(0, 9, 1):
+    if(0 < emotion[j] <= 0.1): # 0-0.1
+          emotion1.append(new[j])      
+    elif(0.1 < emotion[j] <= 0.3):# 0.1-0.3
+        emotion2.append(new[j])
+    elif(0.3 < emotion[j]):# 0.3
+        emotion3.append(new[j])
+        
+# 合併
+    
+app = Flask(__name__)
+
+@app.route('/',methods=['POST','GET'])
+def index():
+    #return render_template('news.html')
+    """
+    if request.method =='POST':
+        print("yes")
+        if request.values['enter']=='確定':
+            choice = request.values['news']
+            print(choice)
+            if request.values['news']=='三立新聞':
+                print("wow")
+            return render_template('news.html',name = request.values['news'])
+    """
+    print("No1")
+    s = [1, 9, 8, 2, 5, 4, 3, 7, 6]
+    picture = ['img/SETN.png', 'img/CTITV.jpg', 'img/sky.png', 'img/UDN.jpg', 'img/NOW.png', 'img/TVBS.png', 'img/TNL.jpeg', 'img/NEW.jpeg', 'img/BNEXT.png']
+    text = ['三立新聞', '中天新聞', '天下', '聯合熱門', '今日新聞', 'TVBS', '關鍵新聞', '公視', '數位時代']
+    f = [set_info, cti_info, ebc_info, udn_info, now_info, tvb_info, tnl_info, new_info, bnext_info]
+    score = list(np.argsort(s))
+
+    
+    for i in range(0, 9, 1):
+        if((score.index(i)-9)*(-1) == 1):
+            one = picture[i]
+            t1 = text[i]
+            info1 = f[i]
+        elif((score.index(i)-9)*(-1) == 2):
+            two = picture[i]
+            t2 = text[i]
+            info2 = f[i]
+        elif((score.index(i)-9)*(-1) == 3):
+            three = picture[i]
+            t3 = text[i]
+            info3 = f[i]
+        elif((score.index(i)-9)*(-1) == 4):
+            four = picture[i]
+            t4 = text[i]
+            info4 = f[i]
+        elif((score.index(i)-9)*(-1) == 5):
+            five = picture[i]
+            t5 = text[i]
+            info5 = f[i]
+        elif((score.index(i)-9)*(-1) == 6):
+            six = picture[i]
+            t6 = text[i]
+            info6 = f[i]
+        elif((score.index(i)-9)*(-1) == 7):
+            seven = picture[i]
+            t7 = text[i]
+            info7 = f[i]
+        elif((score.index(i)-9)*(-1) == 8):
+            eight = picture[i]
+            t8 = text[i]
+            info8 = f[i]
+        elif((score.index(i)-9)*(-1) == 9):
+            nine = picture[i]
+            t9 = text[i]
+            info9 = f[i]
+        '''
+        if f[i] == set_info:
+                info = set_info
+        elif f[i] == cti_info:
+            info = cti_info
+        elif f[i] == ebc_info:
+            info = ebc_info
+        elif f[i] == udn_info:
+            info = udn_info
+        elif f[i] == now_info:
+            info = now_info
+        elif f[i] == tvb_info:
+            info = tvb_info
+        elif f[i] == tnl_info:
+            info = tnl_info
+        elif f[i] == new_info:
+            info = new_info
+        elif f[i] == bnext_info:
+            info = bnext_info
+        '''
+    '''
+    if request.method =='POST':
+        return redirect(url_for('serach'))
+    '''
+    
+    if request.method == 'POST':
+         
+        print(request.form)
+        print(len(list(request.form.keys())))
+        print(list(request.form.keys())[0])
+        # print(request.values["email"])
+        path1= '寄件output.txt'
+        path2 = '性別個人化output.txt'
+        path3 = '反饋output.txt'
+        path4 = '情緒個人化output.txt'
+        out1 = open(path1, 'w')
+        out2 = open(path2, 'w')
+        out3 = open(path3, 'w')
+        out4 = open(path4, 'w')
+        if list(request.form.keys())[0]=='性別友善程度':
+            print("YES1")
+            out2.write("想要的性別友善程度:"+request.values["性別友善程度"]+"\n")
+            print("ok")
+            if(request.form.get("checkbox1") != None):    
+                out2.write("想要的不友善詞語類型:"+request.values["checkbox1"]+"\n")
+                print("ok1")
+            if(request.form.get("checkbox2") != None): 
+                out2.write("想要的不友善詞語類型:"+request.values["checkbox2"]+"\n")
+            if(request.form.get("checkbox3") != None): 
+                out2.write("想要的不友善詞語類型:"+request.values["checkbox3"]+"\n")
+                print("ok3")
+            out2.close()
+            r3 = open(path2,'r')
+            print("ok")
+        else:
+            if len(list(request.form.keys())) == 1 :
+                #print("YES")
+                out4.write("想要的情緒:"+request.values["情緒"]+"\n")
+                print("ok")
+                out4.close()
+            if len(list(request.form.keys())) == 2 :
+                #print("yes")
+                out1.write(request.values["email"])
+                out1.close()
+                msg=email.message.EmailMessage()
+                #利用物件建立基本設定
+                name=request.values["name"]
+                r = open(path1, 'r')
+                from_a="2021CFG4Q@gmail.com"
+                to_b=r.read()
+               # print(to_b)
+                
+                msg["From"]=from_a
+                msg["To"]=to_b
+                msg["Subject"]="關鍵少數"
+                
+                #寄送郵件主要內容
+                #msg.set_content("測試郵件純文字內容") #純文字信件內容
+                msg.add_alternative("<h3>訂閱成功!</h3>%s先生／小姐您好！感謝您訂閱我們關鍵少數，而在未來的日子裡，我們也會在每個月的月初將上個月所統整的排行榜傳送給您。如果有任何建議或疑問，歡迎回覆此郵件，我們將會有專人幫您解答，您的寶貴意見將會讓我們更加進步！"%name,subtype="html") #HTML信件內容
+                
+                acc = from_a
+                password="aqmelnqdnhmulrid"
+                
+                #連線到SMTP Server
+                   
+                #可以從網路上找到主機名稱和連線埠
+                server=smtplib.SMTP_SSL("smtp.gmail.com",465) #建立gmail連驗
+                server.login(acc,password)
+                server.send_message(msg)
+                server.close() #發送完成後關閉連線
+                
+            else:
+                
+                out3.write("姓名:"+request.values["name"]+"\n")
+                out3.write("連絡電話:"+request.values["phone"]+"\n")
+                out3.write("電子信箱:"+request.values["gmail"]+"\n")
+                out3.write("訊息:"+request.values["message"])
+                out3.close()
+                r = open(path3, 'r')
+    
+    return render_template('news.html',name = "", param1="Hello", fname1 = one, fname2 = two, fname3 = three, fname4 = four, fname5 = five, fname6 = six, fname7 = seven, fname8 = eight, fname9 = nine, t1 = t1, t2 = t2, t3 = t3, t4 = t4, t5 = t5, t6 = t6, t7 = t7, t8 = t8, t9 = t9, info1 = info1, info2 = info2, info3 =info3, info4 = info4, info5 = info5, info6 = info6, info7 = info7, info8 = info8, info9 = info9)
+
+@app.route('/search',methods=['POST','GET'])
+def search():
+    
+    
+    #return render_template('news.html')
+    if request.method =='POST':
+        #print("yes")
+        if request.values['enter']=='確定':
+            """
+            choice = request.values['news']
+            print(choice)
+            """
+            if request.values['news']=='set':
+                info = set_info
+            elif request.values['news'] == 'cti':
+                info = cti_info
+            elif request.values['news'] == 'ebc':
+                info = ebc_info
+            elif request.values['news'] == 'udn':
+                info = udn_info
+            elif request.values['news'] == 'now':
+                info = now_info
+            elif request.values['news'] == 'tvbs':
+                info = tvb_info
+            elif request.values['news'] == 'tnl':
+                info = tnl_info
+            elif request.values['news'] == 'new':
+                info = new_info
+            elif request.values['news'] == 'bnext':
+                info = bnext_info
+            return render_template('search.html',name = request.values['news'], data = info)
+    print("No2")
+    return render_template('search.html',name = "")
+
+
+@app.route('/ranking',methods=['POST','GET'])
+def ranking():
+    s = [1, 9, 8, 2, 5, 4, 3, 7, 6]
+    picture = ['img/SETN.png', 'img/CTITV.jpg', 'img/sky.png', 'img/UDN.jpg', 'img/NOW.png', 'img/TVBS.png', 'img/TNL.jpeg', 'img/NEW.jpeg', 'img/BNEXT.png']
+    text = ['三立新聞', '中天新聞', '天下', '聯合熱門', '今日新聞', 'TVBS', '關鍵新聞', '公視', '數位時代']
+    f = [set_info, cti_info, ebc_info, udn_info, now_info, tvb_info, tnl_info, new_info, bnext_info]
+    score = list(np.argsort(s))
+    
+    for i in range(0, 9):
+        if((score.index(i)-9)*(-1) == 1):
+            one = picture[score[i]]
+            t1 = text[score[i]]
+            w1 = w[score[i]]
+        elif((score.index(i)-9)*(-1) == 2):
+            two = picture[score[i]]
+            t2 = text[score[i]]
+            w2 = w[score[i]]
+        elif((score.index(i)-9)*(-1) == 3):
+            three = picture[score[i]]
+            t3 = text[score[i]]
+            w3 = w[score[i]]
+        elif((score.index(i)-9)*(-1) == 4):
+            four = picture[score[i]]
+            t4 = text[score[i]]
+            w4 = w[score[i]]
+        elif((score.index(i)-9)*(-1) == 5):
+            five = picture[score[i]]
+            t5 = text[score[i]]
+            w5 = w[score[i]]
+        elif((score.index(i)-9)*(-1) == 6):
+            six = picture[score[i]]
+            t6 = text[score[i]]
+            w6 = w[score[i]]
+        elif((score.index(i)-9)*(-1) == 7):
+            six = picture[score[i]]
+            t7 = text[score[i]]
+            w7 = w[score[i]]
+        elif((score.index(i)-9)*(-1) == 8):
+            six = picture[score[i]]
+            t8 = text[score[i]]
+            w8 = w[score[i]]
+        elif((score.index(i)-9)*(-1) == 9):
+            six = picture[score[i]]
+            t9 = text[score[i]]
+            w9 = w[score[i]]
+        
+            
+    return render_template('ranking.html', fname1 = one, fname2 = two, fname3 = three, fname4 = four, fname5 = five, fname6 = six, w1 = w1, w2 = w2, w3 = w3, w4 = w4, w5 = w5, w6 = w6, w7 = w7, w8 = w8, w9 = w9, t1 = t1, t2 = t2, t3 = t3, t4 = t4, t5 = t5, t6 = t6, t7 = t7, t8 = t8, t9 = t9)
+
+@app.route('/recommendations',methods=['POST','GET'])
+def recommendations():
+    #layout = ['國際', '政治', '運動', '時事', '娛樂']
+    
+	return render_template('recommendations.html')
+
+@app.route("/chart")
+def chart():
+    data=[{'name': '國際', 'value': 5},
+        {'name': '政治', 'value': 10},
+        {'name': '運動', 'value': 15},
+        {'name': '時事', 'value': 25},
+        {'name': '娛樂', 'value': 45}]
+    return render_template("chart.html", data = ebc_info)
+    
+@app.route("/Bargraph")
+def Bargraph():
+    data1=[{'name':'剩女', 'value': 3},
+          {'name':'陰陽人', 'value': 4},
+          {'name':'女權自助餐', 'value': 1},
+          {'name':'男人婆', 'value': 1},
+          {'name':'gay砲', 'value': 2}]
+    return render_template('Bar graph.html', data1=data1)
+    
+@app.route('/demo',methods=['POST','GET'])
+def demo():
+	return render_template('demo.html')
+
+@app.route('/rank',methods=['POST','GET'])
+def rank():
+	return render_template('rank.html')
+
+@app.route('/emotion',methods=['POST','GET'])
+def emotion():
+    s = [1, 9, 8, 2, 5, 4, 3, 7, 6]
+    picture = ['img/SETN.png', 'img/CTITV.jpg', 'img/sky.png', 'img/UDN.jpg', 'img/NOW.png', 'img/TVBS.png', 'img/TNL.jpeg', 'img/NEW.jpeg', 'img/BNEXT.png']
+    text = ['三立新聞', '中天新聞', '天下', '聯合熱門', '今日新聞', 'TVBS', '關鍵新聞', '公視', '數位時代']
+    f = [set_info, cti_info, ebc_info, udn_info, now_info, tvb_info, tnl_info, new_info, bnext_info]
+    score = list(np.argsort(s))
+    
+    for i in range(0, 9, 1):
+        if((score.index(i)-9)*(-1) == 1):
+            one = picture[i]
+            t1 = text[i]
+            info1 = f[i]
+        elif((score.index(i)-9)*(-1) == 2):
+            two = picture[i]
+            t2 = text[i]
+            info2 = f[i]
+        elif((score.index(i)-9)*(-1) == 3):
+            three = picture[i]
+            t3 = text[i]
+            info3 = f[i]
+        elif((score.index(i)-9)*(-1) == 4):
+            four = picture[i]
+            t4 = text[i]
+            info4 = f[i]
+        elif((score.index(i)-9)*(-1) == 5):
+            five = picture[i]
+            t5 = text[i]
+            info5 = f[i]
+        elif((score.index(i)-9)*(-1) == 6):
+            six = picture[i]
+            t6 = text[i]
+            info6 = f[i]
+        elif((score.index(i)-9)*(-1) == 7):
+            seven = picture[i]
+            t7 = text[i]
+            info7 = f[i]
+        elif((score.index(i)-9)*(-1) == 8):
+            eight = picture[i]
+            t8 = text[i]
+            info8 = f[i]
+        elif((score.index(i)-9)*(-1) == 9):
+            nine = picture[i]
+            t9 = text[i]
+            info9 = f[i]
+        
+    
+        
+    if request.method == 'POST':
+    # 偷看一下 request.form 
+        print(request.form)
+        print(len(list(request.form.keys())))
+        print(list(request.form.keys())[0])
+        # print(request.values["email"])
+        path1= '寄件output.txt'
+        path2 = '性別個人化output.txt'
+        path3 = '反饋output.txt'
+        path4 = '情緒個人化output.txt'
+        out1 = open(path1, 'w')
+        out2 = open(path2, 'w')
+        out3 = open(path3, 'w')
+        out4 = open(path4, 'w')
+       
+        if len(list(request.form.keys())) == 1 :
+            print("YES12")
+            out4.write("想要的情緒:"+request.values["情緒"]+"\n")
+            print(type(request.values["情緒"]))
+            if(request.values["情緒"] == "中性"):
+                print("A1")
+                if(len(emotion1) >= 3):
+                    e1 = 'TVBS'
+                    e2 = '關鍵新聞'
+                    e3 = '天下'
+                    em = "中性"
+                    
+            elif(request.values["情緒"] == "些微正面"):
+                print("A2")
+                e1 = '公視'
+                e2 = '數位時代'
+                e3 = 'no'
+                em = "些微正面"
+            elif(request.values["情緒"] == "正面"):
+                print("A3")
+                e1 = '今日新聞'
+                e2 = '中天'
+                e3 = 'no'
+                em = "正面"
+            print("ok12")
+            out4.close()
+         
+        elif len(list(request.form.keys())) == 2 :
+            #print("yes")
+            out1.write(request.values["email"])
+            out1.close()
+            msg=email.message.EmailMessage()
+            #利用物件建立基本設定
+            
+            r = open(path1, 'r')
+            from_a="2021CFG4Q@gmail.com"
+            to_b=r.read()
+           # print(to_b)
+            
+            msg["From"]=from_a
+            msg["To"]=to_b
+            msg["Subject"]="你好"
+            
+            #寄送郵件主要內容
+            #msg.set_content("測試郵件純文字內容") #純文字信件內容
+            msg.add_alternative("<h3>HTML內容</h3>安安這是寄送郵件測試",subtype="html") #HTML信件內容
+            
+            acc = from_a
+            password="aqmelnqdnhmulrid"
+            
+            #連線到SMTP Server
+               
+            #可以從網路上找到主機名稱和連線埠
+            server=smtplib.SMTP_SSL("smtp.gmail.com",465) #建立gmail連驗
+            server.login(acc,password)
+            server.send_message(msg)
+            server.close() #發送完成後關閉連線
+            
+        else:
+            
+            out3.write("姓名:"+request.values["name"]+"\n")
+            out3.write("連絡電話:"+request.values["phone"]+"\n")
+            out3.write("電子信箱:"+request.values["gmail"]+"\n")
+            out3.write("訊息:"+request.values["message"])
+            out3.close()
+            r = open(path3, 'r')
+
+    return render_template('emotion.html',name = "", param1="Hello", fname1 = one, fname2 = two, fname3 = three, fname4 = four, fname5 = five, fname6 = six, fname7 = seven, fname8 = eight, fname9 = nine, t1 = t1, t2 = t2, t3 = t3, t4 = t4, t5 = t5, t6 = t6, t7 = t7, t8 = t8, t9 = t9, info1 = info1, info2 = info2, info3 =info3, info4 = info4, info5 = info5, info6 = info6, info7 = info7, info8 = info8, info9 = info9, e1=e1, e2=e2, e3=e3, em = em)
+
+
+
+@app.route('/personal',methods=['POST','GET'])
+def personal():
+    s = [1, 9, 8, 2, 5, 4, 3, 7, 6]
+    picture = ['img/SETN.png', 'img/CTITV.jpg', 'img/sky.png', 'img/UDN.jpg', 'img/NOW.png', 'img/TVBS.png', 'img/TNL.jpeg', 'img/NEW.jpeg', 'img/BNEXT.png']
+    text = ['三立新聞', '中天新聞', '天下', '聯合熱門', '今日新聞', 'TVBS', '關鍵新聞', '公視', '數位時代']
+    f = [set_info, cti_info, ebc_info, udn_info, now_info, tvb_info, tnl_info, new_info, bnext_info]
+    score = list(np.argsort(s))
+    
+    for i in range(0, 9, 1):
+        if((score.index(i)-9)*(-1) == 1):
+            one = picture[i]
+            t1 = text[i]
+            info1 = f[i]
+        elif((score.index(i)-9)*(-1) == 2):
+            two = picture[i]
+            t2 = text[i]
+            info2 = f[i]
+        elif((score.index(i)-9)*(-1) == 3):
+            three = picture[i]
+            t3 = text[i]
+            info3 = f[i]
+        elif((score.index(i)-9)*(-1) == 4):
+            four = picture[i]
+            t4 = text[i]
+            info4 = f[i]
+        elif((score.index(i)-9)*(-1) == 5):
+            five = picture[i]
+            t5 = text[i]
+            info5 = f[i]
+        elif((score.index(i)-9)*(-1) == 6):
+            six = picture[i]
+            t6 = text[i]
+            info6 = f[i]
+        elif((score.index(i)-9)*(-1) == 7):
+            seven = picture[i]
+            t7 = text[i]
+            info7 = f[i]
+        elif((score.index(i)-9)*(-1) == 8):
+            eight = picture[i]
+            t8 = text[i]
+            info8 = f[i]
+        elif((score.index(i)-9)*(-1) == 9):
+            nine = picture[i]
+            t9 = text[i]
+            info9 = f[i]
+ 
+    if request.method == 'POST':
+    # 偷看一下 request.form 
+        print(request.form)
+        print(len(list(request.form.keys())))
+        print(list(request.form.keys())[0])
+        # print(request.values["email"])
+        path1= '寄件output.txt'
+        path2 = '性別個人化output.txt'
+        path3 = '反饋output.txt'
+        path4 = '情緒個人化output.txt'
+        out1 = open(path1, 'w')
+        out2 = open(path2, 'w')
+        out3 = open(path3, 'w')
+        out4 = open(path4, 'w')
+        if list(request.form.keys())[0]=='性別友善程度':
+            print("YES1")
+            out2.write("想要的性別友善程度:"+request.values["性別友善程度"]+"\n")
+            print("ok")
+            fr = request.values["性別友善程度"]
+            if(request.values["性別友善程度"] == '友善'):
+                f1 = '中天'
+                f2 = '天下'
+                f3 = 'no'
+            elif(request.values["性別友善程度"] == '稍微友善'):
+                f1 = '今日'
+                f2 = '公視'
+                f3 = '數位時代'
+            elif(request.values["性別友善程度"] == '普通'):
+                f1 = 'no'
+                f2 = 'no'
+                f3 = 'no'
+            elif(request.values["性別友善程度"] == '稍微不友善'):
+                f1 = '聯合熱門'
+                f2 = 'no'
+                f3 = 'no'
+
+            elif(request.values["性別友善程度"] == '不友善'):
+                f1 = '三立'
+                f2 = 'no'
+                f3 = 'no'
+                
+            if(request.form.get("checkbox1") != None):    
+                out2.write("想要的不友善詞語類型:"+request.values["checkbox1"]+"\n")
+                print("ok1")
+            if(request.form.get("checkbox2") != None): 
+                out2.write("想要的不友善詞語類型:"+request.values["checkbox2"]+"\n")
+            if(request.form.get("checkbox3") != None): 
+                out2.write("想要的不友善詞語類型:"+request.values["checkbox3"]+"\n")
+                print("ok3")
+            out2.close()
+            r3 = open(path2,'r')
+            print("ok")
+        else:
+            if len(list(request.form.keys())) == 1 :
+                print("YES")
+                out4.write("想要的情緒:"+request.values["情緒"]+"\n")
+                print("ok")
+                out4.close()
+            if len(list(request.form.keys())) == 2 :
+                #print("yes")
+                out1.write(request.values["email"])
+                out1.close()
+                msg=email.message.EmailMessage()
+                #利用物件建立基本設定
+                name=request.values["name"]
+                r = open(path1, 'r')
+                from_a="2021CFG4Q@gmail.com"
+                to_b=r.read()
+               # print(to_b)
+                
+                msg["From"]=from_a
+                msg["To"]=to_b
+                msg["Subject"]="你好"
+                
+                #寄送郵件主要內容
+                #msg.set_content("測試郵件純文字內容") #純文字信件內容
+                msg.add_alternative("<h3>HTML內容</h3>%s先生／小姐您好！感謝您訂閱我們關鍵少數，而在未來的日子裡，我們也會在每個月的月初將上個月所統整的排行榜傳送給您。如果有任何建議或疑問，歡迎回覆此郵件，我們將會有專人幫您解答，您的寶貴意見將會讓我們更加進步！"%name,subtype="html") #HTML信件內容
+                
+                acc = from_a
+                password="aqmelnqdnhmulrid"
+                
+                #連線到SMTP Server
+                   
+                #可以從網路上找到主機名稱和連線埠
+                server=smtplib.SMTP_SSL("smtp.gmail.com",465) #建立gmail連驗
+                server.login(acc,password)
+                server.send_message(msg)
+                server.close() #發送完成後關閉連線
+                
+            else:
+                
+                out3.write("姓名:"+request.values["name"]+"\n")
+                out3.write("連絡電話:"+request.values["phone"]+"\n")
+                out3.write("電子信箱:"+request.values["gmail"]+"\n")
+                out3.write("訊息:"+request.values["message"])
+                out3.close()
+                r = open(path3, 'r')
+    
+    return render_template('personal.html',name = "", param1="Hello", fname1 = one, fname2 = two, fname3 = three, fname4 = four, fname5 = five, fname6 = six, fname7 = seven, fname8 = eight, fname9 = nine, t1 = t1, t2 = t2, t3 = t3, t4 = t4, t5 = t5, t6 = t6, t7 = t7, t8 = t8, t9 = t9, info1 = info1, info2 = info2, info3 =info3, info4 = info4, info5 = info5, info6 = info6, info7 = info7, info8 = info8, info9 = info9, f1 = f1, f2 = f2, f3 = f3, fr = fr)
+
+
+        
+if __name__ == '__main__':
+    app.run()
